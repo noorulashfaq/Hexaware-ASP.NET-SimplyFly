@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TestSimplyfly")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+76c346b0ac54b55ca190f33749b919467d430012")]
 [assembly: System.Reflection.AssemblyProductAttribute("TestSimplyfly")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TestSimplyfly")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

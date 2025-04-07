@@ -7,7 +7,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SimplyFlyServer.Tests
+namespace TestSimplyfly.RepositoryTests
 {
 	[TestFixture]
 	public class AircraftRepositoryTests
