@@ -10,6 +10,7 @@
         public DateTime ArrivalTime { get; set; }
         public string BaggageInfo { get; set; } = string.Empty;
         public int AvailableSeats { get; set; }
+        public decimal BasePrice {  get; set; }
 
     }
 }

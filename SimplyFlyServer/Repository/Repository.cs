@@ -25,10 +25,14 @@ namespace SimplyFlyServer.Repository
 
         public async Task<T> Update(K key, T entity)
         {
-            var newEntity = await GetById(key);
-            _context.Update(newEntity).CurrentValues.SetValues(entity);
+            var existingEntity = await GetById(key);
+            if (existingEntity == null)
+                throw new Exception("Entity not found");
+
+            _context.Entry(existingEntity).CurrentValues.SetValues(entity);
+
             await _context.SaveChangesAsync();
-            return entity;
+            return existingEntity;
 
         }
 

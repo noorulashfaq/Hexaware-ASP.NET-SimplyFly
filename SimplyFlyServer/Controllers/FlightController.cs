@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SimplyFlyServer.Interface;
 using SimplyFlyServer.Models;
@@ -19,6 +20,7 @@ namespace SimplyFlyServer.Controllers
 
 
         [HttpPost]
+        [Authorize(Roles = "Admin,FlightOwner")]
         public async Task<IActionResult> AddFlight([FromBody] FlightRequest request)
         {
             try
@@ -33,6 +35,7 @@ namespace SimplyFlyServer.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin,FlightOwner")]
         public async Task<IActionResult> UpdateFlight(int id, [FromBody] FlightRequest request)
         {
             try
@@ -47,6 +50,7 @@ namespace SimplyFlyServer.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin,FlightOwner")]
         public async Task<IActionResult> DeleteFlight(int id)
         {
             var success = await _flightService.DeleteFlight(id);
@@ -58,6 +62,7 @@ namespace SimplyFlyServer.Controllers
 
 
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<IActionResult> GetFlightById(int id)
         {
             try
@@ -73,6 +78,7 @@ namespace SimplyFlyServer.Controllers
 
         
         [HttpGet]
+        [Authorize]
         public async Task<IActionResult> GetAllFlights()
         {
             var result = await _flightService.GetAllFlights();
@@ -80,6 +86,7 @@ namespace SimplyFlyServer.Controllers
         }
         
         [HttpPost("filter")]
+        [Authorize]
         public async Task<IActionResult> GetFlightsByFilter([FromBody] FlightFilterRequest request)
         {
             try

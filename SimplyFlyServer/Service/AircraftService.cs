@@ -1,4 +1,5 @@
-﻿using SimplyFlyServer.Interface;
+﻿using SimplyFlyServer.Exceptions;
+using SimplyFlyServer.Interface;
 using SimplyFlyServer.Models;
 using SimplyFlyServer.Models.DTOs;
 
@@ -18,7 +19,7 @@ namespace SimplyFlyServer.Service
             var flightEntity = MapFlight(flight);
             var result = await _aircraftRepository.Add(flightEntity);
             if (result == null)
-                throw new Exception("Failed to create flight");
+                throw new FailedToAddAircraftException();
 
             return new AircraftResponse
             {

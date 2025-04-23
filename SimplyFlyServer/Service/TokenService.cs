@@ -14,12 +14,14 @@ namespace SimplyFlyServer.Service
         {
             _key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Keys:JwtToken"]));
         }
-        public async Task<string> GenerateToken(int id, string name)
+
+        public async Task<string> GenerateToken(int id, string name, string role)
         {
             List<Claim> claims = new List<Claim>()
-           {
+            {
                 new Claim(ClaimTypes.NameIdentifier, id.ToString()),
-                new Claim(ClaimTypes.Name, name)
+                new Claim(ClaimTypes.Name, name),
+                new Claim(ClaimTypes.Role, role)
             };
 
             var creds = new SigningCredentials(_key, SecurityAlgorithms.HmacSha256Signature);

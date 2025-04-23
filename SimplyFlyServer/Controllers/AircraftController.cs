@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SimplyFlyServer.Interface;
 using SimplyFlyServer.Models.DTOs;
@@ -18,6 +19,8 @@ namespace SimplyFlyServer.Controllers
 
         
         [HttpPost]
+        [Authorize(Roles = "Admin,FlightOwner")]
+
         public async Task<IActionResult> AddAircraft([FromBody] AircraftRequest request)
         {
             try
@@ -27,12 +30,13 @@ namespace SimplyFlyServer.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
 
      
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin,FlightOwner")]
         public async Task<IActionResult> UpdateAircraft(int id, [FromBody] AircraftRequest request)
         {
             try
@@ -42,11 +46,12 @@ namespace SimplyFlyServer.Controllers
             }
             catch (Exception ex)
             {
-                return NotFound(new { message = ex.Message });
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin,FlightOwner")]
         public async Task<IActionResult> DeleteAircraft(int id)
         {
             var success = await _aircraftService.DeleteAircraft(id);
@@ -58,6 +63,7 @@ namespace SimplyFlyServer.Controllers
 
      
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<IActionResult> GetAircraftById(int id)
         {
             try
@@ -67,12 +73,13 @@ namespace SimplyFlyServer.Controllers
             }
             catch (Exception ex)
             {
-                return NotFound(new { message = ex.Message });
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
 
    
         [HttpGet]
+        [Authorize]
         public async Task<IActionResult> GetAllAircrafts()
         {
             var result = await _aircraftService.GetAllAircrafts();

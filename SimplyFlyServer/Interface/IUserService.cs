@@ -8,5 +8,8 @@ namespace SimplyFlyServer.Interface
         Task<UserResponse> AddUser(UserRequest user);
         Task<UserResponse> UpdateUser(int id, UserRequest user);
         Task<bool> DeleteUser(int id);
+        Task<IEnumerable<UserResponse>> GetAllUsers();
+        Task<UserResponse> GetUserById(int id);
+
     }
 }

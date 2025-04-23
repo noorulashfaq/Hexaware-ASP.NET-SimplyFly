@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SimplyFlyServer.Interface;
 using SimplyFlyServer.Models.DTOs;
@@ -17,6 +18,8 @@ namespace SimplyFlyServer.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
+
         public async Task<IActionResult> AddAirline([FromBody] AirlineRequest request)
         {
             try
@@ -32,6 +35,8 @@ namespace SimplyFlyServer.Controllers
 
     
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
+
         public async Task<IActionResult> UpdateAirline(int id, [FromBody] AirlineRequest request)
         {
             try
@@ -47,6 +52,8 @@ namespace SimplyFlyServer.Controllers
 
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+
         public async Task<IActionResult> DeleteAirline(int id)
         {
             var success = await _airlineService.DeleteAirline(id);
@@ -58,6 +65,7 @@ namespace SimplyFlyServer.Controllers
 
         
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<IActionResult> GetAirlineById(int id)
         {
             try
@@ -73,6 +81,7 @@ namespace SimplyFlyServer.Controllers
 
       
         [HttpGet]
+        [Authorize]
         public async Task<IActionResult> GetAllAirlines()
         {
             var result = await _airlineService.GetAllAirlines();

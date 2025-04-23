@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SimplyFlyServer.Interface;
@@ -8,6 +9,7 @@ namespace SimplyFlyServer.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [EnableCors("AllowAll")]
     public class AuthenticationController : ControllerBase
     {
         private readonly IAuthenticateService _authenticationService;
@@ -18,7 +20,7 @@ namespace SimplyFlyServer.Controllers
         }
 
         [HttpPost]
-        
+
         public async Task<ActionResult<LoginResponse>> Login(LoginRequest loginRequest)
         {
             try

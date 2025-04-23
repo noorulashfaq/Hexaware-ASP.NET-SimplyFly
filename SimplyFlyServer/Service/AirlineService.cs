@@ -1,4 +1,5 @@
-﻿using SimplyFlyServer.Interface;
+﻿using SimplyFlyServer.Exceptions;
+using SimplyFlyServer.Interface;
 using SimplyFlyServer.Models;
 using SimplyFlyServer.Models.DTOs;
 
@@ -6,33 +7,46 @@ namespace SimplyFlyServer.Service
 {
 	public class AirlineService : IAirlineService
 	{
-		private readonly IRepository<int, Airline> _airlineRepository;
+        private readonly IRepository<int, Airline> _airlineRepository;
+        private readonly IRepository<int, User> _userRepository;
 
-		public AirlineService(IRepository<int, Airline> airlineRepository)
-		{
-			_airlineRepository = airlineRepository;
-		}
-		public async Task<AirlineResponse> AddAirline(AirlineRequest airline)
-		{
-			var airlineEntity = MapAirline(airline);
-			var result = await _airlineRepository.Add(airlineEntity);
-			if (result == null)
-				throw new Exception("Failed to create airline");
-			return new AirlineResponse
-			{
-				AirlineId = result.AirlineId,
-				AirlineName = result.AirlineName,
-				AirlineCode = result.AirlineCode,
-				OwnerId = result.OwnerId,
-				Country = result.Country,
-			};
-		}
+        public AirlineService(IRepository<int, Airline> airlineRepository, IRepository<int, User> userRepository)
+        {
+            _airlineRepository = airlineRepository;
+            _userRepository = userRepository;
+        }
 
-		public async Task<AirlineResponse> UpdateAirline(int id, AirlineRequest airline)
+        public async Task<AirlineResponse> AddAirline(AirlineRequest airline)
+        {
+            var owner = await _userRepository.GetById(airline.OwnerId);
+            if (owner == null)
+                throw new Exception($"User with ID {airline.OwnerId} not found.");
+
+            if (!owner.Role.ToString().Equals("FlightOwner", StringComparison.OrdinalIgnoreCase))
+                throw new Exception("Only users with the role 'FlightOwner' can be set as airline owners.");
+
+            var airlineEntity = MapAirline(airline);
+            var result = await _airlineRepository.Add(airlineEntity);
+
+            if (result == null)
+                throw new FailedToAddAircraftException("Failed to create Airline. Enter correct details.");
+
+            return new AirlineResponse
+            {
+                AirlineId = result.AirlineId,
+                AirlineName = result.AirlineName,
+                AirlineCode = result.AirlineCode,
+                OwnerId = result.OwnerId,
+                Country = result.Country,
+            };
+        }
+
+
+        public async Task<AirlineResponse> UpdateAirline(int id, AirlineRequest airline)
 		{
 			var existingAirline = await _airlineRepository.GetById(id);
 			if (existingAirline == null)
-				throw new Exception("Airline not found");
+				throw new AircraftNotFoundException($"Airline with ID {id} not found.");
 
 			if (!string.IsNullOrEmpty(airline.AirlineName))
 				existingAirline.AirlineName = airline.AirlineName;
@@ -68,9 +82,9 @@ namespace SimplyFlyServer.Service
 		{
 			var flight = await _airlineRepository.GetById(id);
 			if (flight == null)
-				throw new Exception("Airline not found");
+                throw new AircraftNotFoundException($"Airline with ID {id} not found.");
 
-			return new AirlineResponse
+            return new AirlineResponse
 			{
 				AirlineId = flight.AirlineId,
 				AirlineName = flight.AirlineName,

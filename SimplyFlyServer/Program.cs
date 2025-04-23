@@ -1,9 +1,11 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SimplyFlyServer.Context;
 using SimplyFlyServer.Interface;
+using SimplyFlyServer.Mapper;
 using SimplyFlyServer.Models;
 using SimplyFlyServer.Repository;
 using SimplyFlyServer.Service;
@@ -48,6 +50,19 @@ namespace SimplyFlyServer
                      }
             });
             });
+
+            #region CORS
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll",
+                    builder =>
+                    {
+                        builder.AllowAnyOrigin()
+                               .AllowAnyMethod()
+                               .AllowAnyHeader();
+                    });
+            });
+            #endregion
             #region Context
             builder.Services.AddDbContext<SimplyFlyContext>(options =>
             {
@@ -61,6 +76,14 @@ namespace SimplyFlyServer
             builder.Services.AddScoped<IRepository<int, Aircraft>, AircraftRepository>();
             builder.Services.AddScoped<IRepository<int, FlightRoute>, RouteRepository>();
             builder.Services.AddScoped<IRepository<int, Flight>, FlightRepository>();
+            builder.Services.AddScoped<IRepository<int,Price>, PriceRepository>();
+            builder.Services.AddScoped<IRepository<int, Payment>, PaymentRepository>();
+            builder.Services.AddScoped<IRepository<int,Booking>, BookingRepository>();
+            builder.Services.AddScoped<IRepository<int,Seat>, SeatRepository>();
+            builder.Services.AddScoped<IRepository<int,Cancellation>, CancellationRepository>();
+            builder.Services.AddScoped<IRepository<int,Notification>, NotificationRepository>();
+            
+           
             #endregion
 
             #region Tocken
@@ -75,6 +98,19 @@ namespace SimplyFlyServer
             builder.Services.AddScoped<IAircraftService, AircraftService>();
             builder.Services.AddScoped<IRouteservice, RouteService>();
             builder.Services.AddScoped<IFlightService, FlightService>();
+            builder.Services.AddScoped<IPriceService, PriceService>();
+            builder.Services.AddScoped<ISeatService, SeatService>();
+            builder.Services.AddScoped<IBookingService, BookingService>();
+            builder.Services.AddScoped<ICancellationService, CancellationService>();
+            builder.Services.AddScoped<IUserHistoryService, UserHistoryService>();
+            builder.Services.AddScoped<INotificationService, NotificationService>();
+            builder.Services.AddScoped<IAnalysisService, AnalysiService>();
+            #endregion
+
+            #region Mapper
+            builder.Services.AddAutoMapper(typeof(FlightMapper));
+            builder.Services.AddAutoMapper(typeof(CancellationMapper));
+
             #endregion
 
             #region Authentication
@@ -89,6 +125,15 @@ namespace SimplyFlyServer
                         ValidateIssuerSigningKey = true,
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Keys:JwtToken"]))
                     };
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnForbidden = context =>
+                        {
+                            context.Response.StatusCode = 401;
+                            context.Response.ContentType = "application/json";
+                            return context.Response.WriteAsync("{\"error\": \"Unauthorized: Access denied due to your role.\"}");
+                        }
+                    };
                 });
             #endregion
             var app = builder.Build();
@@ -99,6 +144,7 @@ namespace SimplyFlyServer
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+            app.UseCors("AllowAll");
             app.UseAuthentication();
 
             app.UseAuthorization();

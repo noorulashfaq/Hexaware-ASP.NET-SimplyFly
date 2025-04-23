@@ -19,7 +19,6 @@ namespace SimplyFlyServer.Service
 
         public async Task<LoginResponse> Login(LoginRequest loginRequest)
         {
-            // Find the user by UserName
             var users = await _userRepository.GetAll();
             var user = users.FirstOrDefault(u => u.UserName == loginRequest.UserName);
 
@@ -35,13 +34,14 @@ namespace SimplyFlyServer.Service
                     throw new UnauthorizedAccessException("Invalid password");
             }
 
-            // Generate token after successful password verification
-            var token = await _tokenService.GenerateToken(user.UserId, user.UserName);
+            // 🔐 Generate token with role
+            var token = await _tokenService.GenerateToken(user.UserId, user.UserName, user.Role.ToString());
 
             return new LoginResponse
             {
                 UserId = user.UserId,
-                Token = token
+                Token = token,
+                Role = user.Role.ToString()
             };
         }
     }

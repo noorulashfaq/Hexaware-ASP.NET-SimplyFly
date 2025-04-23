@@ -23,7 +23,7 @@ namespace SimplyFlyServer.Repository
         {
             var flyings = _context.Flights.FirstOrDefault(f => f.FlightId == key);
             if (flyings == null)
-                throw new Exception("Flying routes not found");
+                throw new Exception("Flight not found");
             return flyings;
         }
     }

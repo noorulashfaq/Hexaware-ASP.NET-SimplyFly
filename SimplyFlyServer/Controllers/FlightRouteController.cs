@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SimplyFlyServer.Interface;
 using SimplyFlyServer.Models;
@@ -18,6 +19,7 @@ namespace SimplyFlyServer.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin,FlightOwner")]
         public async Task<ActionResult<FlightRouteResponse>> AddRoute(FlightRouteRequest route)
         {
             try
@@ -32,6 +34,7 @@ namespace SimplyFlyServer.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<FlightRouteResponse>>> GetAllRoutes()
         {
             var routes = await _routeService.GetAllRoutes();
@@ -39,6 +42,7 @@ namespace SimplyFlyServer.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<ActionResult<FlightRouteResponse>> GetRouteById(int id)
         {
             try
@@ -53,6 +57,7 @@ namespace SimplyFlyServer.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin,FlightOwner")]
         public async Task<ActionResult<FlightRouteResponse>> UpdateRoute(int id, FlightRouteRequest route)
         {
             try
@@ -67,6 +72,7 @@ namespace SimplyFlyServer.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin,FlightOwner")]
         public async Task<ActionResult> DeleteRoute(int id)
         {
             var success = await _routeService.DeleteRoute(id);

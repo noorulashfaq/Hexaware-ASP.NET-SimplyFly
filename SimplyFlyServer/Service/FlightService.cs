@@ -1,61 +1,59 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
+using SimplyFlyServer.Exceptions;
 using SimplyFlyServer.Interface;
 using SimplyFlyServer.Models;
 using SimplyFlyServer.Models.DTOs;
+using SimplyFlyServer.Repository;
 
 namespace SimplyFlyServer.Service
 {
     public class FlightService : IFlightService
-	{
+    {
         private readonly IRepository<int, Flight> _flightRepository;
+        private readonly IRepository<int, Aircraft> _aircraftRepository;
+        private readonly IMapper _mapper;
 
-        public FlightService(IRepository<int, Flight> flyingRepository)
+        public FlightService(IRepository<int, Flight> flyingRepository,
+                             IRepository<int, Aircraft> aircraftRepository,
+                             IMapper mapper)
         {
-			_flightRepository = flyingRepository;
+            _flightRepository = flyingRepository;
+            _aircraftRepository = aircraftRepository;
+            _mapper = mapper;
         }
 
         public async Task<FlightResponse> AddFlight(FlightRequest request)
         {
             try
             {
-                var flying = MapToFlying(request);
-                var result = await _flightRepository.Add(flying);
-                return MapToResponse(result);
+                var aircraft = await _aircraftRepository.GetById(request.AircraftId);
+                if (aircraft == null)
+                    throw new AircraftNotFoundException($"Aircraft with ID {request.AircraftId} not found.");
+
+                if (!aircraft.FlightStatus.Equals("Active", StringComparison.OrdinalIgnoreCase))
+                    throw new FailedToAddFlightException("Flight cannot be added. The associated aircraft is not active.");
+
+                var flight = _mapper.Map<Flight>(request);
+                var result = await _flightRepository.Add(flight);
+                return _mapper.Map<FlightResponse>(result);
             }
-            catch (DbUpdateException dbEx)
+            catch (DbUpdateException)
             {
-                throw new Exception(dbEx.InnerException?.Message ?? dbEx.Message);
+                throw new FailedToAddFlightException();
             }
         }
-
 
         public async Task<FlightResponse> UpdateFlight(int id, FlightRequest request)
         {
             var existing = await _flightRepository.GetById(id);
             if (existing == null)
-                throw new Exception("Flying record not found");
+                throw new FlightNotFoundException($"Flight with ID {id} not found.");
 
-            if (request.AircraftId > 0)
-                existing.AircraftId = request.AircraftId;
-
-            if (request.RouteId > 0)
-                existing.RouteId = request.RouteId;
-
-            if (request.DepartureTime != default)
-                existing.DepartureTime = request.DepartureTime;
-
-            if (request.ArrivalTime != default)
-                existing.ArrivalTime = request.ArrivalTime;
-
-            if (!string.IsNullOrEmpty(request.BaggageInfo))
-                existing.BaggageInfo = request.BaggageInfo;
-
-            if (request.AvailableSeats > 0)
-                existing.AvailableSeats = request.AvailableSeats;
+            _mapper.Map(request, existing);
 
             var result = await _flightRepository.Update(id, existing);
-
-            return MapToResponse(result);
+            return _mapper.Map<FlightResponse>(result);
         }
 
         public async Task<bool> DeleteFlight(int id)
@@ -70,46 +68,17 @@ namespace SimplyFlyServer.Service
 
         public async Task<IEnumerable<FlightResponse>> GetAllFlights()
         {
-            var flyings = await _flightRepository.GetAll();
-            return flyings.Select(MapToResponse);
+            var flights = await _flightRepository.GetAll();
+            return flights.Select(f => _mapper.Map<FlightResponse>(f));
         }
 
         public async Task<FlightResponse> GetFlightById(int id)
         {
-            var flying = await _flightRepository.GetById(id);
-            if (flying == null)
-                throw new Exception("Flight record not found");
+            var flight = await _flightRepository.GetById(id);
+            if (flight == null)
+                throw new FlightNotFoundException($"Flight with ID {id} not found.");
 
-            return MapToResponse(flying);
-        }
-
-        private Flight MapToFlying(FlightRequest request)
-        {
-            return new Flight
-            {
-				AircraftId = request.AircraftId,
-                RouteId = request.RouteId,
-                AirlineId = request.AirlineId,
-                DepartureTime = request.DepartureTime,
-                ArrivalTime = request.ArrivalTime,
-                BaggageInfo = request.BaggageInfo,
-                AvailableSeats = request.AvailableSeats
-            };
-        }
-
-        private FlightResponse MapToResponse(Flight flying)
-        {
-            return new FlightResponse
-            {
-                FlightId = flying.FlightId,
-                AircraftId = flying.AircraftId,
-                RouteId = flying.RouteId,
-                DepartureTime = flying.DepartureTime,
-                ArrivalTime = flying.ArrivalTime,
-                BaggageInfo = flying.BaggageInfo,
-                AvailableSeats = flying.AvailableSeats,
-                AirlineId = flying.Aircraft?.AirlineId ?? 0
-            };
+            return _mapper.Map<FlightResponse>(flight);
         }
 
         public async Task<IEnumerable<FlightResponse>> GetFlightsByFilter(FlightFilterRequest request)
@@ -119,9 +88,11 @@ namespace SimplyFlyServer.Service
             if (request.Filters != null)
                 flights = FlightsByFilter(request.Filters, flights);
 
-            return flights.Select(MapToResponse).ToList();
-        }
+            if (request.SortBy.HasValue)
+                flights = SortFlight((int)request.SortBy, flights);
 
+            return flights.Select(f => _mapper.Map<FlightResponse>(f)).ToList();
+        }
 
         private List<Flight> FlightsByFilter(FlightFilter filter, List<Flight> flights)
         {
@@ -134,8 +105,24 @@ namespace SimplyFlyServer.Service
             if (filter.ArrivalTime.HasValue)
                 flights = flights.Where(f => f.ArrivalTime.Date == filter.ArrivalTime.Value.Date).ToList();
 
+            if (filter.RouteId.HasValue)
+                flights = flights.Where(f => f.RouteId == filter.RouteId.Value).ToList();
+
             return flights;
         }
 
+        private List<Flight> SortFlight(int sortBy, List<Flight> flights)
+        {
+            switch (sortBy)
+            {
+                case -1:
+                    flights = flights.OrderByDescending(f => f.BasePrice).ToList();
+                    break;
+                case 1:
+                    flights = flights.OrderBy(f => f.BasePrice).ToList();
+                    break;
+            }
+            return flights;
+        }
     }
 }
